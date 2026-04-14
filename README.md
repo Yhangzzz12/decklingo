@@ -34,7 +34,7 @@ No API key needed. Just install and use.
 1. Install [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader/tree/main?tab=readme-ov-file#-installation) on your Steam Deck
 2. Open (...) side bar and move down to Decky menu
 3. Select **store** icon to view all the available plugins
-4. Search for "Decky Translator" and install it
+4. Search for "Decklingo" and install it
 
 ## How to use it?
 
