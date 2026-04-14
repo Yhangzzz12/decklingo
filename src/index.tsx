@@ -22,7 +22,7 @@ function Content() {
   const [view, setView] = useState<"input" | "wordlist" | "review">("input");
   const [inputText, setInputText] = useState<string>("");
   const [translation, setTranslation] = useState<string>("");
-  const [targetLang, setTargetLang] = useState<string>("EN");
+  const [targetLang, setTargetLang] = useState<string>("ZH");
   const [loading, setLoading] = useState<boolean>(false);
   const [words, setWords] = useState<any[]>([]);
   const [gameId, setGameId] = useState<string | null>(null);

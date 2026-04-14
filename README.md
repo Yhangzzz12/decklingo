@@ -7,7 +7,7 @@
 
 A [Decky Loader](https://decky.xyz) plugin for Steam Deck or other SteamOS devices that helps you translate and save words while gaming.
 
-When you encounter a word or phrase in a game that you don't understand, open Decklingo, type it in, get an instant CN↔EN translation, and save it to your personal word list — organized by game automatically.
+When you encounter a word or phrase in a game that you don't understand, open Decklingo, type it in, get an instant EN↔CN translation, and save it to your personal word list — organized by game automatically.
 
 No API key needed. Just install and use.
 
@@ -15,7 +15,7 @@ No API key needed. Just install and use.
 
 ## Features
 
-- **CN ↔ EN Translation** — powered by DeepL, no setup required
+- **EN ↔ CN Translation** — powered by DeepL, no setup required
 - **Auto game detection** — automatically detects the currently running game
 - **Save words per game** — words are organized by game automatically
 - **Word List** — browse all saved words for the current game
