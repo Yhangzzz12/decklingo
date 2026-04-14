@@ -1,20 +1,15 @@
 import os
-
+import json
 # The decky plugin module is located at decky-loader/plugin
 # For easy intellisense checkout the decky-loader code repo
 # and add the `decky-loader/plugin/imports` path to `python.analysis.extraPaths` in `.vscode/settings.json`
 import decky
 import asyncio
+from dotenv import load_dotenv
+import requests
 
 class Plugin:
-    # A normal method. It can be called from the TypeScript side using @decky/api.
-    async def add(self, left: int, right: int) -> int:
-        return left + right
-
-    async def long_running(self):
-        await asyncio.sleep(15)
-        # Passing through a bunch of random data, just as an example
-        await decky.emit("timer_event", "Hello from the backend!", True, 2)
+    GAME_DATA_PATH = "/home/deck/game.json"
 
     # Asyncio-compatible long-running code, executed in a task when the plugin is loaded
     async def _main(self):
@@ -33,25 +28,73 @@ class Plugin:
         decky.logger.info("Goodbye World!")
         pass
 
-    async def start_timer(self):
-        self.loop.create_task(self.long_running())
-
     # Migrations that should be performed before entering `_main()`.
     async def _migration(self):
-        decky.logger.info("Migrating")
-        # Here's a migration example for logs:
-        # - `~/.config/decky-template/template.log` will be migrated to `decky.decky_LOG_DIR/template.log`
-        decky.migrate_logs(os.path.join(decky.DECKY_USER_HOME,
-                                               ".config", "decky-template", "template.log"))
-        # Here's a migration example for settings:
-        # - `~/homebrew/settings/template.json` is migrated to `decky.decky_SETTINGS_DIR/template.json`
-        # - `~/.config/decky-template/` all files and directories under this root are migrated to `decky.decky_SETTINGS_DIR/`
-        decky.migrate_settings(
-            os.path.join(decky.DECKY_HOME, "settings", "template.json"),
-            os.path.join(decky.DECKY_USER_HOME, ".config", "decky-template"))
-        # Here's a migration example for runtime data:
-        # - `~/homebrew/template/` all files and directories under this root are migrated to `decky.decky_RUNTIME_DIR/`
-        # - `~/.local/share/decky-template/` all files and directories under this root are migrated to `decky.decky_RUNTIME_DIR/`
-        decky.migrate_runtime(
-            os.path.join(decky.DECKY_HOME, "template"),
-            os.path.join(decky.DECKY_USER_HOME, ".local", "share", "decky-template"))
+        pass
+
+
+    async def save_word(self, game_id, game_name, word, translation):
+        if not os.path.exists(self.GAME_DATA_PATH):
+            json_string = {}
+        else:
+            with open(self.GAME_DATA_PATH, 'r') as file:
+                json_string = json.load(file)
+    # If game not exist, auto create a game with specific game ID
+        if game_id not in json_string:
+                json_string[game_id]= {
+                    "game_name": game_name,
+                     "words": []
+                }
+
+        words_list = json_string[game_id]["words"]
+        words_id = len(words_list)
+
+        
+
+        if len(words_list) == 0:
+            json_string[game_id]["words"].append( {"id": 1, "word": word, "translation": translation, "starred": False})
+            with open (self.GAME_DATA_PATH, "w") as file:
+                json.dump(json_string, file, indent=4)
+                return json_string 
+        else:
+            json_string[game_id]["words"].append( {"id": words_id + 1, "word": word, "translation": translation, "starred": False})
+            with open (self.GAME_DATA_PATH, "w") as file:
+                json.dump(json_string, file, indent=4)
+                return json_string
+                       
+    async def get_words(self, game_id):
+        if not os.path.exists(self.GAME_DATA_PATH):
+            json_string = {}
+        else:
+            with open(self.GAME_DATA_PATH, 'r') as file:
+                json_string = json.load(file)
+                return json_string[game_id]["words"]
+    
+    async def toggle_star(self, game_id, word_id):
+        with open(self.GAME_DATA_PATH, 'r') as file:
+                json_string = json.load(file)
+        for word in json_string[game_id]["words"]:
+            if word["id"] == word_id:
+                word["starred"] = not word["starred"]
+                break
+            # save after loop
+        with open(self.GAME_DATA_PATH, 'w') as file:
+            json.dump(json_string, file, indent=4)
+
+    async def translate(self, text, target_lang):
+        url = "http://100.31.2.116:5000/translate"
+        payload = {
+            "text": text,
+            "target_lang": target_lang
+        }
+        response = requests.post(url, json=payload)
+        if response.status_code == 200:
+            return response.json()["translation"]
+        else:
+            return f"Error {response.status_code}"
+
+        
+
+
+
+

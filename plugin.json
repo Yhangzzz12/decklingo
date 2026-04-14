@@ -1,11 +1,11 @@
 {
-  "name": "Example Plugin",
-  "author": "John Doe",
-  "flags": ["debug", "_root"],
+  "name": "Decklingo",
+  "author": "Yhangzzz12",
+  "flags": [],
   "api_version": 1,
   "publish": {
-    "tags": ["template", "root"],
-    "description": "Decky example plugin.",
-    "image": "https://opengraph.githubassets.com/1/SteamDeckHomebrew/PluginLoader"
+    "tags": ["Translation"],
+    "description": "CN↔EN translation helper for SteamOS. Save words per game, star favorites, and review later.",
+    "image": "https://raw.githubusercontent.com/Yhangzzz12/decklingo/main/assets/preview.jpg"
   }
 }

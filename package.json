@@ -1,7 +1,7 @@
 {
-  "name": "decky-plugin-template",
+  "name": "decklingo",
   "version": "0.0.1",
-  "description": "A template to quickly create decky plugins from scratch, based on TypeScript and webpack",
+  "description": "Chinese/English language helper for Steam Deck & Legion Go S",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
@@ -10,24 +10,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SteamDeckHomebrew/decky-plugin-template.git"
+    "url": "git+https://github.com/Yhangzzz12/decklingo.git"
   },
   "keywords": [
     "decky",
     "plugin",
-    "plugin-template",
+    "translation",
+    "language-learning",
     "steam-deck",
     "deck"
   ],
-  "author": "You <you@you.tld>",
+  "author": "Yhangzzz12",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/SteamDeckHomebrew/decky-plugin-template/issues"
+    "url": "https://github.com/Yhangzzz12/decklingo/issues"
   },
-  "homepage": "https://github.com/SteamDeckHomebrew/decky-plugin-template#readme",
+  "homepage": "https://github.com/Yhangzzz12/decklingo",
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
-    "@decky/ui": "^4.11.0",
+    "@decky/ui": "^4.11.3",
     "@rollup/rollup-linux-x64-musl": "^4.53.3",
     "@types/react": "19.1.1",
     "@types/react-dom": "19.1.1",

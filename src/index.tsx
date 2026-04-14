@@ -1,115 +1,227 @@
+declare var SteamUIStore: any;
 import {
   ButtonItem,
   PanelSection,
   PanelSectionRow,
-  Navigation,
+  TextField,
   staticClasses
 } from "@decky/ui";
 import {
-  addEventListener,
-  removeEventListener,
   callable,
   definePlugin,
-  toaster,
-  // routerHook
 } from "@decky/api"
-import { useState } from "react";
-import { FaShip } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaLanguage } from "react-icons/fa";
 
-// import logo from "../assets/logo.png";
-
-// This function calls the python function "add", which takes in two numbers and returns their sum (as a number)
-// Note the type annotations:
-//  the first one: [first: number, second: number] is for the arguments
-//  the second one: number is for the return value
-const add = callable<[first: number, second: number], number>("add");
-
-// This function calls the python function "start_timer", which takes in no arguments and returns nothing.
-// It starts a (python) timer which eventually emits the event 'timer_event'
-const startTimer = callable<[], void>("start_timer");
+const translate = callable<[text: string, target_lang: string], string>("translate");
+const saveWord = callable<[game_id: string, game_name: string, word: string, translation: string], any>("save_word");
+const getWords = callable<[game_id: string], any>("get_words");
+const toggleStar = callable<[game_id: string, word_id: number], void>("toggle_star");
 
 function Content() {
-  const [result, setResult] = useState<number | undefined>();
+  const [view, setView] = useState<"input" | "wordlist" | "review">("input");
+  const [inputText, setInputText] = useState<string>("");
+  const [translation, setTranslation] = useState<string>("");
+  const [targetLang, setTargetLang] = useState<string>("EN");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [words, setWords] = useState<any[]>([]);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [gameName, setGameName] = useState<string>("")
 
-  const onClick = async () => {
-    const result = await add(Math.random(), Math.random());
-    setResult(result);
+  useEffect(() => {
+    const runningApps = SteamUIStore.RunningApps;
+    if (runningApps && runningApps.length > 0) {
+        const app = runningApps[0];
+        setGameId(app.appid.toString());
+        setGameName(app.display_name || "Unknown");
+        loadWords(app.appid.toString());
+    }
+}, []);
+
+  const loadWords = async (id?: string) => {
+    const targetId = id || gameId;
+    if (!targetId) return;
+    const result = await getWords(targetId);
+    setWords(result || []);
   };
 
-  return (
-    <PanelSection title="Panel Section">
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={onClick}
-        >
-          {result ?? "Add two numbers via Python"}
-        </ButtonItem>
-      </PanelSectionRow>
-      <PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => startTimer()}
-        >
-          {"Start Python timer"}
-        </ButtonItem>
-      </PanelSectionRow>
+  const handleTranslate = async () => {
+    if (!inputText) return;
+    setLoading(true);
+    const result = await translate(inputText, targetLang);
+    setTranslation(result);
+    setLoading(false);
+  };
 
-      {/* <PanelSectionRow>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <img src={logo} />
-        </div>
-      </PanelSectionRow> */}
+  const handleSave = async () => {
+    if (!inputText || !translation || !gameId) return;
+    await saveWord(gameId, gameName,inputText, translation);
+    await loadWords(gameId);
+    setInputText("");
+    setTranslation("");
+  };
 
-      {/*<PanelSectionRow>
-        <ButtonItem
-          layout="below"
-          onClick={() => {
-            Navigation.Navigate("/decky-plugin-test");
-            Navigation.CloseSideMenus();
-          }}
-        >
-          Router
-        </ButtonItem>
-      </PanelSectionRow>*/}
-    </PanelSection>
-  );
-};
+  const handleToggleStar = async (wordId: number) => {
+    if (!gameId) return;
+    await toggleStar(gameId, wordId);
+    await loadWords(gameId);
+  };
+
+  const toggleLang = () => {
+    setTargetLang(targetLang === "EN" ? "ZH" : "EN");
+  };
+
+  // INPUT VIEW
+  if (view === "input") {
+    return (
+      <PanelSection title="DeckLingo">
+
+        {!gameId ? (
+          <PanelSectionRow>
+            <div style={{ padding: "8px", color: "gray", fontSize: "13px" }}>
+              No active applications are playing right now.
+            </div>
+          </PanelSectionRow>
+        ) : (
+          <PanelSectionRow>
+            <div style={{ padding: "8px", color: "gray", fontSize: "13px" }}>
+              Game: {gameName}
+            </div>
+          </PanelSectionRow>
+        )}
+
+        <PanelSectionRow>
+          <TextField
+            label="Enter word or phrase"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+        </PanelSectionRow>
+
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={toggleLang}>
+            {targetLang === "EN" ? "CN → EN" : "EN → CN"}
+          </ButtonItem>
+        </PanelSectionRow>
+
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={handleTranslate}>
+            {loading ? "Translating..." : "Translate"}
+          </ButtonItem>
+        </PanelSectionRow>
+
+        {translation ? (
+          <>
+            <PanelSectionRow>
+              <div style={{ padding: "8px", color: "white", fontSize: "14px" }}>
+                {translation}
+              </div>
+            </PanelSectionRow>
+            <PanelSectionRow>
+              <ButtonItem
+                layout="below"
+                onClick={handleSave}
+                disabled={!gameId}
+              >
+                Save Word
+              </ButtonItem>
+            </PanelSectionRow>
+          </>
+        ) : null}
+
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => setView("wordlist")}>
+            Word List
+          </ButtonItem>
+        </PanelSectionRow>
+
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => setView("review")}>
+            Review Starred
+          </ButtonItem>
+        </PanelSectionRow>
+
+      </PanelSection>
+    );
+  }
+
+  // WORD LIST VIEW
+  if (view === "wordlist") {
+    return (
+      <PanelSection title="Word List">
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => setView("input")}>
+            ← Back
+          </ButtonItem>
+        </PanelSectionRow>
+
+        {!gameId ? (
+          <PanelSectionRow>
+            <div style={{ padding: "8px", color: "gray", fontSize: "13px" }}>
+              No game detected. Launch a game first.
+            </div>
+          </PanelSectionRow>
+        ) : words.length === 0 ? (
+          <PanelSectionRow>
+            <div style={{ padding: "8px", color: "gray", fontSize: "13px" }}>
+              No words saved yet.
+            </div>
+          </PanelSectionRow>
+        ) : (
+          words.map((word) => (
+            <PanelSectionRow key={word.id}>
+              <ButtonItem
+                layout="below"
+                onClick={() => handleToggleStar(word.id)}
+              >
+                {word.starred ? "★ " : "☆ "}{word.word} — {word.translation}
+              </ButtonItem>
+            </PanelSectionRow>
+          ))
+        )}
+      </PanelSection>
+    );
+  }
+
+  // REVIEW VIEW
+  if (view === "review") {
+    const starred = words.filter((w) => w.starred);
+    return (
+      <PanelSection title="Starred Words">
+        <PanelSectionRow>
+          <ButtonItem layout="below" onClick={() => setView("input")}>
+            ← Back
+          </ButtonItem>
+        </PanelSectionRow>
+
+        {starred.length === 0 ? (
+          <PanelSectionRow>
+            <div style={{ padding: "8px", color: "gray", fontSize: "13px" }}>
+              No starred words yet. Star words in the Word List.
+            </div>
+          </PanelSectionRow>
+        ) : (
+          starred.map((word) => (
+            <PanelSectionRow key={word.id}>
+              <ButtonItem layout="below">
+                ★ {word.word} — {word.translation}
+              </ButtonItem>
+            </PanelSectionRow>
+          ))
+        )}
+      </PanelSection>
+    );
+  }
+
+  return null;
+}
 
 export default definePlugin(() => {
-  console.log("Template plugin initializing, this is called once on frontend startup")
-
-  // serverApi.routerHook.addRoute("/decky-plugin-test", DeckyPluginRouterTest, {
-  //   exact: true,
-  // });
-
-  // Add an event listener to the "timer_event" event from the backend
-  const listener = addEventListener<[
-    test1: string,
-    test2: boolean,
-    test3: number
-  ]>("timer_event", (test1, test2, test3) => {
-    console.log("Template got timer_event with:", test1, test2, test3)
-    toaster.toast({
-      title: "template got timer_event",
-      body: `${test1}, ${test2}, ${test3}`
-    });
-  });
-
   return {
-    // The name shown in various decky menus
-    name: "Test Plugin",
-    // The element displayed at the top of your plugin's menu
-    titleView: <div className={staticClasses.Title}>Decky Example Plugin</div>,
-    // The content of your plugin's menu
+    name: "DeckLingo",
+    titleView: <div className={staticClasses.Title}>DeckLingo</div>,
     content: <Content />,
-    // The icon displayed in the plugin list
-    icon: <FaShip />,
-    // The function triggered when your plugin unloads
-    onDismount() {
-      console.log("Unloading")
-      removeEventListener("timer_event", listener);
-      // serverApi.routerHook.removeRoute("/decky-plugin-test");
-    },
+    icon: <FaLanguage />,
+    onDismount() {},
   };
 });
