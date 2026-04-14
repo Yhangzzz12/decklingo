@@ -5,7 +5,7 @@
   "api_version": 1,
   "publish": {
     "tags": ["Translation"],
-    "description": "CN↔EN translation helper for SteamOS. Save words per game, star favorites, and review later.",
+    "description": "EN-CN translation helper for SteamOS. Save words per game, star favorites, and review later.",
     "image": "https://raw.githubusercontent.com/Yhangzzz12/decklingo/main/assets/preview.jpg"
   }
 }
