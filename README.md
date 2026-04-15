@@ -30,6 +30,15 @@ No API key needed. Just install and use.
 
 ## Installation
 
+### Manual Installation
+
+1. Proceed to **CODE** &rarr; **Download ZIP**
+2. Install [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader/tree/main?tab=readme-ov-file#-installation) & Proceed to **Decky Settings** &rarr; **General**.
+3. Enable **Developer Mode**.
+4. Then go to newly appeared **Developer** tab &rarr; **Install Plugin from ZIP File** and click **Browse**. Or you can try directly installing from via link by entering it to **Install Plugin from URL** text field.
+5. Select the ZIP archive
+6. Restart Decky Loader
+
 ### From Decky Plugin Store
 1. Install [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader/tree/main?tab=readme-ov-file#-installation) on your Steam Deck
 2. Open (...) side bar and move down to Decky menu
