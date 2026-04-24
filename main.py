@@ -82,7 +82,7 @@ class Plugin:
             json.dump(json_string, file, indent=4)
 
     async def translate(self, text, target_lang):
-        url = "http://100.31.2.116:5000/translate"
+        url = "http://decklingoserver.com:5000/translate"
         payload = {
             "text": text,
             "target_lang": target_lang

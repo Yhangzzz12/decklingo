@@ -32,13 +32,6 @@ bower_components
 .DS_Store
 Thumbs.db
 
-# Ignore files
-py_modules
-pnpm-lock.yaml
-requirements.txt
-rollup.config.js
-tsconfig.json
-decky.pyi
 
 __pycache__/
 
