@@ -88,6 +88,18 @@ const translate = callable("translate");
 const saveWord = callable("save_word");
 const getWords = callable("get_words");
 const toggleStar = callable("toggle_star");
+const C = {
+    accent: "#7C3AED",
+    accentSoft: "rgba(124,58,237,0.12)",
+    star: "#F59E0B",
+    starSoft: "rgba(245,158,11,0.12)",
+    success: "#22C55E",
+    successSoft: "rgba(34,197,94,0.12)",
+    error: "#F43F5E",
+    errorSoft: "rgba(244,63,94,0.12)",
+    textPrimary: "#E2E8F0",
+    textMuted: "#94A3B8",
+};
 function Content() {
     const [view, setView] = SP_REACT.useState("input");
     const [inputText, setInputText] = SP_REACT.useState("");
@@ -97,6 +109,8 @@ function Content() {
     const [words, setWords] = SP_REACT.useState([]);
     const [gameId, setGameId] = SP_REACT.useState(null);
     const [gameName, setGameName] = SP_REACT.useState("");
+    const [savedFeedback, setSavedFeedback] = SP_REACT.useState(false);
+    const [error, setError] = SP_REACT.useState(null);
     SP_REACT.useEffect(() => {
         const runningApps = SteamUIStore.RunningApps;
         if (runningApps && runningApps.length > 0) {
@@ -117,9 +131,17 @@ function Content() {
         if (!inputText)
             return;
         setLoading(true);
-        const result = await translate(inputText, targetLang);
-        setTranslation(result);
-        setLoading(false);
+        setError(null);
+        try {
+            const result = await translate(inputText, targetLang);
+            setTranslation(result);
+        }
+        catch (e) {
+            setError("Translation failed. Check your connection.");
+        }
+        finally {
+            setLoading(false);
+        }
     };
     const handleSave = async () => {
         if (!inputText || !translation || !gameId)
@@ -128,6 +150,8 @@ function Content() {
         await loadWords(gameId);
         setInputText("");
         setTranslation("");
+        setSavedFeedback(true);
+        setTimeout(() => setSavedFeedback(false), 1500);
     };
     const handleToggleStar = async (wordId) => {
         if (!gameId)
@@ -138,18 +162,61 @@ function Content() {
     const toggleLang = () => {
         setTargetLang(targetLang === "EN" ? "ZH" : "EN");
     };
+    const starredCount = words.filter((w) => w.starred).length;
     // INPUT VIEW
     if (view === "input") {
-        return (SP_JSX.jsxs(DFL.PanelSection, { title: "DeckLingo", children: [!gameId ? (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx("div", { style: { padding: "8px", color: "gray", fontSize: "13px" }, children: "No active applications are playing right now." }) })) : (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs("div", { style: { padding: "8px", color: "gray", fontSize: "13px" }, children: ["Game: ", gameName] }) })), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.TextField, { label: "Enter word or phrase", value: inputText, onChange: (e) => setInputText(e.target.value) }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: toggleLang, children: targetLang === "EN" ? "CN → EN" : "EN → CN" }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: handleTranslate, children: loading ? "Translating..." : "Translate" }) }), translation ? (SP_JSX.jsxs(SP_JSX.Fragment, { children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx("div", { style: { padding: "8px", color: "white", fontSize: "14px" }, children: translation }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: handleSave, disabled: !gameId, children: "Save Word" }) })] })) : null, SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("wordlist"), children: "Word List" }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("review"), children: "Review Starred" }) })] }));
+        return (SP_JSX.jsxs(DFL.PanelSection, { title: "DeckLingo", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs("div", { style: {
+                            display: "flex", alignItems: "center", gap: 8,
+                            padding: "6px 10px", borderRadius: 8,
+                            background: gameId ? C.successSoft : C.errorSoft,
+                            border: `1px solid ${gameId ? C.success : C.error}33`,
+                            fontSize: 12, color: gameId ? C.success : C.error,
+                        }, children: [SP_JSX.jsx("span", { style: {
+                                    width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                                    background: gameId ? C.success : C.error,
+                                } }), gameId ? gameName : "No game detected — launch a game first"] }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.TextField, { label: "Enter word or phrase", value: inputText, onChange: (e) => setInputText(e.target.value) }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: toggleLang, children: SP_JSX.jsxs("span", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [SP_JSX.jsx("span", { style: {
+                                        padding: "2px 8px", borderRadius: 4,
+                                        background: C.accentSoft, color: C.accent, fontSize: 11,
+                                    }, children: targetLang === "EN" ? "CN" : "EN" }), "\u2192", SP_JSX.jsx("span", { style: {
+                                        padding: "2px 8px", borderRadius: 4,
+                                        background: C.accentSoft, color: C.accent, fontSize: 11,
+                                    }, children: targetLang })] }) }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: handleTranslate, disabled: loading || !inputText, children: SP_JSX.jsx("span", { style: { opacity: loading ? 0.6 : 1 }, children: loading ? "Translating…" : "Translate" }) }) }), error && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx("div", { style: {
+                            borderLeft: `3px solid ${C.error}`,
+                            background: C.errorSoft,
+                            borderRadius: "0 8px 8px 0",
+                            padding: "8px 12px",
+                            fontSize: 12, color: C.error,
+                        }, children: error }) })), translation && (SP_JSX.jsxs(SP_JSX.Fragment, { children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs("div", { style: {
+                                    borderLeft: `3px solid ${C.accent}`,
+                                    background: C.accentSoft,
+                                    borderRadius: "0 8px 8px 0",
+                                    padding: "10px 12px",
+                                }, children: [SP_JSX.jsx("div", { style: {
+                                            fontSize: 10, color: C.textMuted, marginBottom: 4,
+                                            letterSpacing: "0.08em", textTransform: "uppercase",
+                                        }, children: "Translation" }), SP_JSX.jsx("div", { style: { fontSize: 16, color: C.textPrimary, fontWeight: 500 }, children: translation })] }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: handleSave, disabled: !gameId, children: "Save Word" }) })] })), savedFeedback && (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs("div", { style: {
+                            display: "flex", alignItems: "center", gap: 6,
+                            padding: "6px 10px", borderRadius: 8,
+                            background: C.successSoft, color: C.success, fontSize: 12,
+                        }, children: [SP_JSX.jsx("span", { children: "\u2713" }), " Word saved!"] }) })), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("wordlist"), children: SP_JSX.jsxs("span", { style: { display: "flex", alignItems: "center", gap: 6 }, children: ["Word List", words.length > 0 && (SP_JSX.jsx("span", { style: {
+                                        padding: "1px 7px", borderRadius: 999,
+                                        background: C.accentSoft, color: C.accent, fontSize: 11,
+                                    }, children: words.length }))] }) }) }), SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("review"), children: SP_JSX.jsxs("span", { style: { display: "flex", alignItems: "center", gap: 6 }, children: ["Review Starred", starredCount > 0 && (SP_JSX.jsx("span", { style: {
+                                        padding: "1px 7px", borderRadius: 999,
+                                        background: C.starSoft, color: C.star, fontSize: 11,
+                                    }, children: starredCount }))] }) }) })] }));
     }
     // WORD LIST VIEW
     if (view === "wordlist") {
-        return (SP_JSX.jsxs(DFL.PanelSection, { title: "Word List", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("input"), children: "\u2190 Back" }) }), !gameId ? (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx("div", { style: { padding: "8px", color: "gray", fontSize: "13px" }, children: "No game detected. Launch a game first." }) })) : words.length === 0 ? (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx("div", { style: { padding: "8px", color: "gray", fontSize: "13px" }, children: "No words saved yet." }) })) : (words.map((word) => (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs(DFL.ButtonItem, { layout: "below", onClick: () => handleToggleStar(word.id), children: [word.starred ? "★ " : "☆ ", word.word, " \u2014 ", word.translation] }) }, word.id))))] }));
+        return (SP_JSX.jsxs(DFL.PanelSection, { title: `Word List (${words.length})`, children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("input"), children: "\u2190 Back" }) }), !gameId ? (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs("div", { style: { textAlign: "center", padding: "16px 8px" }, children: [SP_JSX.jsx("div", { style: { fontSize: 13, color: C.textMuted }, children: "No game detected" }), SP_JSX.jsx("div", { style: { fontSize: 11, color: C.textMuted, marginTop: 4, opacity: 0.6 }, children: "Launch a game and reopen DeckLingo" })] }) })) : words.length === 0 ? (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs("div", { style: { textAlign: "center", padding: "16px 8px" }, children: [SP_JSX.jsx("div", { style: { fontSize: 13, color: C.textMuted }, children: "No words saved yet" }), SP_JSX.jsx("div", { style: { fontSize: 11, color: C.textMuted, marginTop: 4, opacity: 0.6 }, children: "Go back and translate a word to get started" })] }) })) : (words.map((word) => (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => handleToggleStar(word.id), children: SP_JSX.jsxs("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [SP_JSX.jsx("span", { style: {
+                                        color: word.starred ? C.star : C.textMuted,
+                                        fontSize: 16, flexShrink: 0,
+                                    }, children: word.starred ? "★" : "☆" }), SP_JSX.jsxs("div", { children: [SP_JSX.jsx("div", { style: { fontSize: 13, color: C.textPrimary }, children: word.word }), SP_JSX.jsx("div", { style: { fontSize: 11, color: C.textMuted }, children: word.translation })] })] }) }) }, word.id))))] }));
     }
     // REVIEW VIEW
     if (view === "review") {
         const starred = words.filter((w) => w.starred);
-        return (SP_JSX.jsxs(DFL.PanelSection, { title: "Starred Words", children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("input"), children: "\u2190 Back" }) }), starred.length === 0 ? (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx("div", { style: { padding: "8px", color: "gray", fontSize: "13px" }, children: "No starred words yet. Star words in the Word List." }) })) : (starred.map((word) => (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs(DFL.ButtonItem, { layout: "below", children: ["\u2605 ", word.word, " \u2014 ", word.translation] }) }, word.id))))] }));
+        return (SP_JSX.jsxs(DFL.PanelSection, { title: `Starred Words (${starred.length})`, children: [SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => setView("input"), children: "\u2190 Back" }) }), starred.length === 0 ? (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsxs("div", { style: { textAlign: "center", padding: "16px 8px" }, children: [SP_JSX.jsx("div", { style: { fontSize: 13, color: C.textMuted }, children: "No starred words yet" }), SP_JSX.jsx("div", { style: { fontSize: 11, color: C.textMuted, marginTop: 4, opacity: 0.6 }, children: "Tap the star on any word in the Word List" })] }) })) : (starred.map((word) => (SP_JSX.jsx(DFL.PanelSectionRow, { children: SP_JSX.jsx(DFL.ButtonItem, { layout: "below", onClick: () => handleToggleStar(word.id), children: SP_JSX.jsxs("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [SP_JSX.jsx("span", { style: { color: C.star, fontSize: 16, flexShrink: 0 }, children: "\u2605" }), SP_JSX.jsxs("div", { children: [SP_JSX.jsx("div", { style: { fontSize: 13, color: C.textPrimary }, children: word.word }), SP_JSX.jsx("div", { style: { fontSize: 11, color: C.textMuted }, children: word.translation })] })] }) }) }, word.id))))] }));
     }
     return null;
 }
