@@ -17,9 +17,9 @@ No API key needed. Just install and use.
 
 - **EN ↔ CN Translation** — powered by DeepL, no setup required
 - **Auto game detection** — automatically detects the currently running game
-- **Save words per game** — words are organized by game automatically
-- **Word List** — browse all saved words for the current game
-- **Star / Review** — star important words and review them later
+- **Save words/sentences per game** — words/sentences are organized by game automatically
+- **Words/Sentences List** — browse all saved words/sentences for the current game
+- **Star / Review** — star important words/sentences and review them later
 - **No configuration needed** — just install and translate
 
 ### Requirements
